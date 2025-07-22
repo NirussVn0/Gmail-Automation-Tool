@@ -4,7 +4,7 @@ A comprehensive tool for automated Gmail account creation with proxy support, ph
 
 ## Features
 
-[Image] 
+[Image]
 
 ## Architecture
 
@@ -58,6 +58,46 @@ gmail_automation/
 
 4. **Manual Installation:**
 
+   **System Dependencies:**
+
+   Before setting up the Python environment, install the required system dependencies:
+
+   **For Arch Linux (using yay):**
+
+   ```bash
+   sudo yay -Sy
+   sudo yay -Sy python3-dev python3-venv postgresql-dev libpq-dev build-essential
+   ```
+
+   **For Ubuntu/Debian:**
+
+   ```bash
+   sudo apt update
+   sudo apt install python3-dev python3-venv postgresql-dev libpq-dev build-essential
+   ```
+
+   **For CentOS/RHEL/Fedora:**
+
+   ```bash
+   # CentOS/RHEL
+   sudo yum install python3-devel postgresql-devel gcc
+
+   # Fedora
+   sudo dnf install python3-devel postgresql-devel gcc
+   ```
+
+   **For macOS:**
+
+   ```bash
+   # Install Homebrew if not already installed
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+   # Install PostgreSQL
+   brew install postgresql
+   ```
+
+   **Troubleshooting**: If you encounter psycopg2 installation issues, you can temporarily use SQLite for development by setting `DB_URL=sqlite:///./gmail_automation.db` in your `.env` file instead of PostgreSQL.
+
    **Important**: Always use a virtual environment to avoid dependency conflicts with system Python packages.
 
    **For Unix/Linux/macOS:**
@@ -72,14 +112,35 @@ gmail_automation/
    # Upgrade pip to the latest version
    pip install --upgrade pip
 
-   # Install dependencies
+   # Option A: Install with PostgreSQL support (requires PostgreSQL dev headers)
    pip install -r requirements.txt
+
+   # Option B: Install for development (SQLite only, no PostgreSQL dependencies)
+   pip install -r requirements-dev.txt
 
    # Set up database with Alembic migrations
    python -m alembic upgrade head
 
    # Run the application
    python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
+   ```
+
+   **If you encounter PostgreSQL installation errors:**
+
+   ```bash
+   # On Ubuntu/Debian:
+   sudo apt-get install postgresql-dev libpq-dev
+
+   # On CentOS/RHEL/Fedora:
+   sudo yum install postgresql-devel
+   # or
+   sudo dnf install postgresql-devel
+
+   # On macOS with Homebrew:
+   brew install postgresql
+
+   # Then retry the installation:
+   pip install -r requirements.txt
    ```
 
    **For Windows:**
