@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseSettings, Field, validator
-from pydantic_settings import BaseSettings as PydanticBaseSettings
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings
 
 
 class DatabaseConfig(BaseSettings):
@@ -28,8 +28,7 @@ class DatabaseConfig(BaseSettings):
         description="Maximum database connection overflow"
     )
     
-    class Config:
-        env_prefix = "DB_"
+    model_config = {"env_prefix": "DB_"}
 
 
 class SecurityConfig(BaseSettings):
@@ -56,7 +55,8 @@ class SecurityConfig(BaseSettings):
         description="JWT token expiration time in hours"
     )
     
-    @validator("secret_key", "encryption_key", "password_salt")
+    @field_validator("secret_key", "encryption_key", "password_salt")
+    @classmethod
     def validate_keys(cls, v: str) -> str:
         """Validate that security keys are properly set."""
         if v.startswith("your-") and "change-this" in v:
@@ -65,8 +65,7 @@ class SecurityConfig(BaseSettings):
             raise ValueError("Security keys must be at least 32 characters long")
         return v
     
-    class Config:
-        env_prefix = "SECURITY_"
+    model_config = {"env_prefix": "SECURITY_"}
 
 
 class ProxyConfig(BaseSettings):
@@ -93,7 +92,8 @@ class ProxyConfig(BaseSettings):
         description="Maximum retry attempts for failed proxy connections"
     )
     
-    @validator("rotation_strategy")
+    @field_validator("rotation_strategy")
+    @classmethod
     def validate_rotation_strategy(cls, v: str) -> str:
         """Validate proxy rotation strategy."""
         allowed_strategies = ["round_robin", "random", "weighted"]
@@ -101,8 +101,7 @@ class ProxyConfig(BaseSettings):
             raise ValueError(f"Invalid rotation strategy. Must be one of: {allowed_strategies}")
         return v
     
-    class Config:
-        env_prefix = "PROXY_"
+    model_config = {"env_prefix": "PROXY_"}
 
 
 class AccountCreationConfig(BaseSettings):
@@ -137,15 +136,15 @@ class AccountCreationConfig(BaseSettings):
         description="Number of accounts to create in a batch"
     )
     
-    @validator("delay_min", "delay_max")
+    @field_validator("delay_min", "delay_max")
+    @classmethod
     def validate_delays(cls, v: float) -> float:
         """Validate delay values."""
         if v < 0:
             raise ValueError("Delay values must be non-negative")
         return v
     
-    class Config:
-        env_prefix = "ACCOUNT_"
+    model_config = {"env_prefix": "ACCOUNT_"}
 
 
 class WebDriverConfig(BaseSettings):
@@ -184,8 +183,7 @@ class WebDriverConfig(BaseSettings):
         description="Disable JavaScript execution"
     )
     
-    class Config:
-        env_prefix = "WEBDRIVER_"
+    model_config = {"env_prefix": "WEBDRIVER_"}
 
 
 class LoggingConfig(BaseSettings):
@@ -212,7 +210,8 @@ class LoggingConfig(BaseSettings):
         description="Number of backup log files to keep"
     )
     
-    @validator("level")
+    @field_validator("level")
+    @classmethod
     def validate_level(cls, v: str) -> str:
         """Validate logging level."""
         allowed_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -220,11 +219,10 @@ class LoggingConfig(BaseSettings):
             raise ValueError(f"Invalid logging level. Must be one of: {allowed_levels}")
         return v.upper()
     
-    class Config:
-        env_prefix = "LOG_"
+    model_config = {"env_prefix": "LOG_"}
 
 
-class AppConfig(PydanticBaseSettings):
+class AppConfig(BaseSettings):
     """Main application configuration."""
     
     # Application settings
@@ -257,10 +255,12 @@ class AppConfig(PydanticBaseSettings):
     webdriver: WebDriverConfig = Field(default_factory=WebDriverConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": False,
+        "extra": "ignore"
+    }
 
 
 def load_config() -> AppConfig:

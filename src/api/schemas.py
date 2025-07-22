@@ -24,7 +24,7 @@ class GmailAccountBase(BaseSchema):
     last_name: str = Field(..., min_length=1, max_length=100)
     birth_date: Optional[datetime] = None
     recovery_email: Optional[EmailStr] = None
-    phone_number: Optional[str] = Field(None, regex=r'^\+?[\d\s\-\(\)]+$')
+    phone_number: Optional[str] = Field(None, pattern=r'^\+?[\d\s\-\(\)]+$')
 
 
 class GmailAccountCreate(GmailAccountBase):
@@ -38,7 +38,7 @@ class GmailAccountUpdate(BaseSchema):
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     birth_date: Optional[datetime] = None
     recovery_email: Optional[EmailStr] = None
-    phone_number: Optional[str] = Field(None, regex=r'^\+?[\d\s\-\(\)]+$')
+    phone_number: Optional[str] = Field(None, pattern=r'^\+?[\d\s\-\(\)]+$')
     status: Optional[AccountStatus] = None
 
 
@@ -67,7 +67,7 @@ class ProxyBase(BaseSchema):
     """Base proxy schema."""
     host: str = Field(..., min_length=1)
     port: int = Field(..., ge=1, le=65535)
-    proxy_type: str = Field(default="http", regex=r'^(http|https|socks5)$')
+    proxy_type: str = Field(default="http", pattern=r'^(http|https|socks5)$')
     username: Optional[str] = None
     max_concurrent_usage: int = Field(default=5, ge=1, le=100)
     weight: float = Field(default=1.0, ge=0.1, le=10.0)
@@ -131,7 +131,7 @@ class ProxyStats(BaseSchema):
 # Verification schemas
 class VerificationSessionBase(BaseSchema):
     """Base verification session schema."""
-    phone_number: str = Field(..., regex=r'^\+?[\d\s\-\(\)]+$')
+    phone_number: str = Field(..., pattern=r'^\+?[\d\s\-\(\)]+$')
     service_name: str
 
 
@@ -179,7 +179,7 @@ class CreationJobUpdate(BaseSchema):
     """Schema for updating creation jobs."""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
-    status: Optional[str] = Field(None, regex=r'^(pending|running|completed|failed|cancelled)$')
+    status: Optional[str] = Field(None, pattern=r'^(pending|running|completed|failed|cancelled)$')
 
 
 class CreationJobResponse(CreationJobBase):
