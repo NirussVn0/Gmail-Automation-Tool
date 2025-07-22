@@ -4,14 +4,7 @@ A comprehensive tool for automated Gmail account creation with proxy support, ph
 
 ## Features
 
-- **Automated Gmail Account Creation**: Generate Gmail accounts with structured naming conventions
-- **Password Management**: Secure password generation and AES-256 encryption
-- **Proxy Integration**: HTTP/HTTPS and SOCKS5 proxy rotation with health checking
-- **Phone Verification**: Integration with SMS verification services
-- **Anti-Detection**: Sophisticated measures to avoid detection
-- **Web Dashboard**: React-based frontend with real-time updates
-- **API**: RESTful API with comprehensive endpoints
-- **Security**: Industry-standard encryption and secure configuration management
+[Image] 
 
 ## Architecture
 
@@ -44,33 +37,74 @@ gmail_automation/
 ### Installation
 
 1. **Clone the repository:**
+
    ```bash
-   git clone <repository-url>
-   cd gmail-automation
+   git clone https://github.com/NirussVn0/Gmail-Automation-Tool.git
+   cd Gmail-Automation-Tool
    ```
 
 2. **Set up environment variables:**
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 3. **Using Docker (Recommended):**
+
    ```bash
    docker-compose up -d
    ```
 
 4. **Manual Installation:**
+
+   **Important**: Always use a virtual environment to avoid dependency conflicts with system Python packages.
+
+   **For Unix/Linux/macOS:**
+
    ```bash
+   # Create a Python virtual environment
+   python3 -m venv venv
+
+   # Activate the virtual environment
+   source venv/bin/activate
+
+   # Upgrade pip to the latest version
+   pip install --upgrade pip
+
    # Install dependencies
    pip install -r requirements.txt
-   
-   # Set up database
+
+   # Set up database with Alembic migrations
    python -m alembic upgrade head
-   
+
    # Run the application
    python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
    ```
+
+   **For Windows:**
+
+   ```cmd
+   # Create a Python virtual environment
+   python -m venv venv
+
+   # Activate the virtual environment
+   venv\Scripts\activate
+
+   # Upgrade pip to the latest version
+   python -m pip install --upgrade pip
+
+   # Install dependencies
+   pip install -r requirements.txt
+
+   # Set up database with Alembic migrations
+   python -m alembic upgrade head
+
+   # Run the application
+   python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
+   ```
+
+   **Note**: To deactivate the virtual environment when you're done, simply run `deactivate` in your terminal.
 
 ### Configuration
 
@@ -124,6 +158,7 @@ API documentation is available at `http://localhost:8000/docs`
 ### Creating Accounts
 
 1. **Single Account:**
+
    ```bash
    curl -X POST "http://localhost:8000/api/v1/accounts/" \
         -H "Content-Type: application/json" \
@@ -150,6 +185,7 @@ API documentation is available at `http://localhost:8000/docs`
 ### Managing Proxies
 
 1. **Add Proxy:**
+
    ```bash
    curl -X POST "http://localhost:8000/api/v1/proxies/" \
         -H "Content-Type: application/json" \
@@ -203,6 +239,7 @@ pytest --cov=src --cov-report=html
 ### Production Deployment
 
 1. **Environment Setup:**
+
    ```bash
    # Set production environment variables
    export SECURITY_SECRET_KEY="your-production-secret-key"
@@ -211,6 +248,7 @@ pytest --cov=src --cov-report=html
    ```
 
 2. **Docker Deployment:**
+
    ```bash
    docker-compose -f docker-compose.prod.yml up -d
    ```
