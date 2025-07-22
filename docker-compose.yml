@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # Main application
+  gmail-automation:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_URL=postgresql://gmail_user:gmail_password@postgres:5432/gmail_automation
+      - REDIS_URL=redis://redis:6379/0
+      - SECURITY_SECRET_KEY=${SECURITY_SECRET_KEY:-your-secret-key-change-this-in-production-32chars-minimum}
+      - SECURITY_ENCRYPTION_KEY=${SECURITY_ENCRYPTION_KEY:-your-encryption-key-change-this-in-production-32chars-minimum}
+      - SECURITY_PASSWORD_SALT=${SECURITY_PASSWORD_SALT:-your-password-salt-change-this-in-production-32chars-minimum}
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - gmail-automation-network
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=gmail_automation
+      - POSTGRES_USER=gmail_user
+      - POSTGRES_PASSWORD=gmail_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - gmail-automation-network
+
+  # Redis for caching and task queue
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - gmail-automation-network
+
+  # Celery worker for background tasks
+  celery-worker:
+    build: .
+    command: celery -A src.tasks.celery_app worker --loglevel=info
+    environment:
+      - DB_URL=postgresql://gmail_user:gmail_password@postgres:5432/gmail_automation
+      - REDIS_URL=redis://redis:6379/0
+      - SECURITY_SECRET_KEY=${SECURITY_SECRET_KEY:-your-secret-key-change-this-in-production-32chars-minimum}
+      - SECURITY_ENCRYPTION_KEY=${SECURITY_ENCRYPTION_KEY:-your-encryption-key-change-this-in-production-32chars-minimum}
+      - SECURITY_PASSWORD_SALT=${SECURITY_PASSWORD_SALT:-your-password-salt-change-this-in-production-32chars-minimum}
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - gmail-automation-network
+
+  # Celery beat for scheduled tasks
+  celery-beat:
+    build: .
+    command: celery -A src.tasks.celery_app beat --loglevel=info
+    environment:
+      - DB_URL=postgresql://gmail_user:gmail_password@postgres:5432/gmail_automation
+      - REDIS_URL=redis://redis:6379/0
+      - SECURITY_SECRET_KEY=${SECURITY_SECRET_KEY:-your-secret-key-change-this-in-production-32chars-minimum}
+      - SECURITY_ENCRYPTION_KEY=${SECURITY_ENCRYPTION_KEY:-your-encryption-key-change-this-in-production-32chars-minimum}
+      - SECURITY_PASSWORD_SALT=${SECURITY_PASSWORD_SALT:-your-password-salt-change-this-in-production-32chars-minimum}
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - gmail-automation-network
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - gmail-automation
+    restart: unless-stopped
+    networks:
+      - gmail-automation-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  gmail-automation-network:
+    driver: bridge
