@@ -4,14 +4,7 @@ A comprehensive tool for automated Gmail account creation with proxy support, ph
 
 ## Features
 
-- **Automated Gmail Account Creation**: Generate Gmail accounts with structured naming conventions
-- **Password Management**: Secure password generation and AES-256 encryption
-- **Proxy Integration**: HTTP/HTTPS and SOCKS5 proxy rotation with health checking
-- **Phone Verification**: Integration with SMS verification services
-- **Anti-Detection**: Sophisticated measures to avoid detection
-- **Web Dashboard**: React-based frontend with real-time updates
-- **API**: RESTful API with comprehensive endpoints
-- **Security**: Industry-standard encryption and secure configuration management
+[Image] 
 
 ## Architecture
 
