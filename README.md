@@ -2,188 +2,102 @@
 
 A comprehensive tool for automated Gmail account creation with proxy support, phone verification, and advanced anti-detection measures.
 
-## Features
+## Table of Contents
 
-[Image]
+1. [🚀 Quick Start](#-quick-start)
+2. [🔧 Alternative Methods](#-alternative-methods)
+3. [📋 Features](#-features)
+4. [🛠️ Configuration](#-configuration)
+5. [🔒 Security Notes](#-security-notes)
+6. [🤝 Support](#-support)
 
-## Architecture
-
-The application follows a modular architecture with clear separation of concerns:
-
-```
-gmail_automation/
-├── src/
-│   ├── core/              # Core business logic
-│   ├── database/          # Database models and repositories
-│   ├── api/               # FastAPI routes and schemas
-│   ├── utils/             # Utilities and configuration
-│   └── main.py            # Application entry point
-├── tests/                 # Unit and integration tests
-├── frontend/              # React frontend
-├── config/                # Configuration files
-├── docs/                  # Documentation
-└── scripts/               # Deployment and utility scripts
-```
-
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
+- **Python**: 3.8+ (recommended 3.11+)
+- **Node.js**: 18.0+
+- **Git**: Latest version
 
-- Python 3.8+
-- Docker and Docker Compose (recommended)
-- PostgreSQL (for production)
-- Redis (for task queue)
+### Installation & Run
 
-### Installation
+```bash
+# 1. Clone repository
+git clone https://github.com/NirussVn0/Gmail-Automation-Tool.git
+cd Gmail-Automation-Tool
 
-1. **Clone the repository:**
+# 2. Run everything (recommended)
+chmod +x run_all.sh
+./run_all.sh
+```
 
-   ```bash
-   git clone https://github.com/NirussVn0/Gmail-Automation-Tool.git
-   cd Gmail-Automation-Tool
-   ```
+**That's it!** The script will:
+- ✅ Install all dependencies automatically
+- ✅ Set up Python virtual environment
+- ✅ Start backend API (port 8001)
+- ✅ Start frontend dashboard (port 3001)
 
-2. **Set up environment variables:**
+### Access Application
+- **Dashboard**: http://localhost:3001
+- **API Docs**: http://localhost:8001/docs
+- **Health Check**: http://localhost:8001/health
 
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+### Stop Services
+Press `Ctrl+C` in the terminal
 
-3. **Using Docker (Recommended):**
+## 🔧 Alternative Methods
 
-   ```bash
-   docker-compose up -d
-   ```
+### Production Deployment
+```bash
+# Install PM2 globally
+npm install -g pm2
 
-4. **Manual Installation:**
+# Start production services
+./manage_services.sh start production
 
-   **System Dependencies:**
+# Monitor services
+./manage_services.sh monitor
+```
 
-   Before setting up the Python environment, install the required system dependencies:
+### Manual Setup (if scripts fail)
+```bash
+# Backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python -m uvicorn src.main:app --host 0.0.0.0 --port 8001
 
-   **For Arch Linux (using yay):**
+# Frontend (new terminal)
+cd dashboard
+npm install
+npm run dev
+```
 
-   ```bash
-   sudo yay -Sy
-   sudo yay -Sy python3-dev python3-venv postgresql-dev libpq-dev build-essential
-   ```
+## 📋 Features
 
-   **For Ubuntu/Debian:**
+### Core Functionality
+- **Bulk Account Creation**: Create multiple Gmail accounts automatically
+- **Proxy Management**: Advanced proxy rotation with health monitoring
+- **SMS Verification**: Integrated phone verification services
+- **Real-time Dashboard**: Monitor progress with live updates
+- **Anti-detection**: Browser fingerprinting and behavior randomization
 
-   ```bash
-   sudo apt update
-   sudo apt install python3-dev python3-venv postgresql-dev libpq-dev build-essential
-   ```
+### Advanced Features
+- **Multiple Proxy Strategies**: Round-robin, random, weighted selection
+- **Health Monitoring**: Automatic proxy health checks and failover
+- **Concurrent Processing**: Parallel account creation with rate limiting
+- **Comprehensive Logging**: Detailed logs for debugging and monitoring
 
-   **For CentOS/RHEL/Fedora:**
+## 🛠️ Configuration
 
-   ```bash
-   # CentOS/RHEL
-   sudo yum install python3-devel postgresql-devel gcc
-
-   # Fedora
-   sudo dnf install python3-devel postgresql-devel gcc
-   ```
-
-   **For macOS:**
-
-   ```bash
-   # Install Homebrew if not already installed
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-   # Install PostgreSQL
-   brew install postgresql
-   ```
-
-   **Troubleshooting**: If you encounter psycopg2 installation issues, you can temporarily use SQLite for development by setting `DB_URL=sqlite:///./gmail_automation.db` in your `.env` file instead of PostgreSQL.
-
-   **Important**: Always use a virtual environment to avoid dependency conflicts with system Python packages.
-
-   **For Unix/Linux/macOS:**
-
-   ```bash
-   # Create a Python virtual environment
-   python3 -m venv venv
-
-   # Activate the virtual environment
-   source venv/bin/activate
-
-   # Upgrade pip to the latest version
-   pip install --upgrade pip
-
-   # Option A: Install with PostgreSQL support (requires PostgreSQL dev headers)
-   pip install -r requirements.txt
-
-   # Option B: Install for development (SQLite only, no PostgreSQL dependencies)
-   pip install -r requirements-dev.txt
-
-   # Set up database with Alembic migrations
-   python -m alembic upgrade head
-
-   # Run the application
-   python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
-   ```
-
-   **If you encounter PostgreSQL installation errors:**
-
-   ```bash
-   # On Ubuntu/Debian:
-   sudo apt-get install postgresql-dev libpq-dev
-
-   # On CentOS/RHEL/Fedora:
-   sudo yum install postgresql-devel
-   # or
-   sudo dnf install postgresql-devel
-
-   # On macOS with Homebrew:
-   brew install postgresql
-
-   # Then retry the installation:
-   pip install -r requirements.txt
-   ```
-
-   **For Windows:**
-
-   ```cmd
-   # Create a Python virtual environment
-   python -m venv venv
-
-   # Activate the virtual environment
-   venv\Scripts\activate
-
-   # Upgrade pip to the latest version
-   python -m pip install --upgrade pip
-
-   # Install dependencies
-   pip install -r requirements.txt
-
-   # Set up database with Alembic migrations
-   python -m alembic upgrade head
-
-   # Run the application
-   python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
-   ```
-
-   **Note**: To deactivate the virtual environment when you're done, simply run `deactivate` in your terminal.
-
-### Configuration
-
-Key configuration options in `.env`:
-
+### Environment Variables
+Key settings in `.env` file:
 ```env
-# Security (CHANGE THESE IN PRODUCTION!)
-SECURITY_SECRET_KEY="your-super-secret-key-32chars-minimum"
+# Security (CHANGE IN PRODUCTION!)
+SECURITY_SECRET_KEY="your-secret-key-32chars-minimum"
 SECURITY_ENCRYPTION_KEY="your-encryption-key-32chars-minimum"
-SECURITY_PASSWORD_SALT="your-password-salt-32chars-minimum"
 
 # Database
-DB_URL="postgresql://username:password@localhost:5432/gmail_automation"
-
-# Account Creation
-ACCOUNT_BASE_NAME="testuser"
-ACCOUNT_STARTING_ID=1
-ACCOUNT_BASE_PASSWORD="SecurePass"
+DB_URL="sqlite:///./gmail_automation.db"
 
 # Proxy Settings
 PROXY_ENABLED=true
@@ -194,171 +108,36 @@ SMS_SERVICE_PRIMARY="textverified"
 SMS_SERVICE_API_KEY="your-api-key"
 ```
 
-## Usage
+## 🔒 Security Notes
 
-### Web Interface
+⚠️ **Important**: This tool is for educational and testing purposes only. Users must ensure compliance with Gmail's Terms of Service and applicable laws.
 
-Access the web dashboard at `http://localhost:8000` to:
+- Change default security keys in production
+- Use HTTPS for production deployments
+- Implement proper rate limiting
+- Secure database credentials
 
-- Monitor account creation progress
-- Manage proxy configurations
-- View system statistics
-- Configure settings
-
-### API Endpoints
-
-The API provides comprehensive endpoints for all operations:
-
-- **Accounts**: `/api/v1/accounts/`
-- **Proxies**: `/api/v1/proxies/`
-- **Verification**: `/api/v1/verification/`
-- **Jobs**: `/api/v1/jobs/`
-
-API documentation is available at `http://localhost:8000/docs`
-
-### Creating Accounts
-
-1. **Single Account:**
-
-   ```bash
-   curl -X POST "http://localhost:8000/api/v1/accounts/" \
-        -H "Content-Type: application/json" \
-        -d '{
-          "email": "test@gmail.com",
-          "password": "SecurePassword123",
-          "first_name": "Test",
-          "last_name": "User"
-        }'
-   ```
-
-2. **Batch Creation:**
-   ```bash
-   curl -X POST "http://localhost:8000/api/v1/accounts/batch" \
-        -H "Content-Type: application/json" \
-        -d '{
-          "base_name": "testuser",
-          "starting_id": 1,
-          "count": 10,
-          "base_password": "SecurePass"
-        }'
-   ```
-
-### Managing Proxies
-
-1. **Add Proxy:**
-
-   ```bash
-   curl -X POST "http://localhost:8000/api/v1/proxies/" \
-        -H "Content-Type: application/json" \
-        -d '{
-          "host": "proxy.example.com",
-          "port": 8080,
-          "proxy_type": "http",
-          "username": "user",
-          "password": "pass"
-        }'
-   ```
-
-2. **Test Proxy:**
-   ```bash
-   curl -X POST "http://localhost:8000/api/v1/proxies/1/test"
-   ```
-
-## Security Considerations
-
-### Important Security Notes
-
-1. **Change Default Keys**: Always change the default security keys in production
-2. **Use HTTPS**: Configure SSL/TLS for production deployments
-3. **Secure Database**: Use strong database credentials and restrict access
-4. **Rate Limiting**: Implement appropriate rate limiting to avoid overwhelming services
-5. **Compliance**: Ensure compliance with Gmail's Terms of Service
-
-### Encryption
-
-- Passwords are encrypted using AES-256 with PBKDF2 key derivation
-- All sensitive data is encrypted at rest
-- Secure key management with environment variables
-
-## Testing
-
-Run the test suite:
-
-```bash
-# Unit tests
-pytest tests/unit/
-
-# Integration tests
-pytest tests/integration/
-
-# All tests with coverage
-pytest --cov=src --cov-report=html
-```
-
-## Deployment
-
-### Production Deployment
-
-1. **Environment Setup:**
-
-   ```bash
-   # Set production environment variables
-   export SECURITY_SECRET_KEY="your-production-secret-key"
-   export SECURITY_ENCRYPTION_KEY="your-production-encryption-key"
-   export DB_URL="postgresql://user:pass@db-host:5432/gmail_automation"
-   ```
-
-2. **Docker Deployment:**
-
-   ```bash
-   docker-compose -f docker-compose.prod.yml up -d
-   ```
-
-3. **Database Migration:**
-   ```bash
-   docker-compose exec gmail-automation python -m alembic upgrade head
-   ```
-
-### Monitoring
-
-- Application logs are available in the `logs/` directory
-- Health check endpoint: `/health`
-- Metrics endpoint: `/metrics` (if enabled)
-
-## API Documentation
-
-Comprehensive API documentation is available at `/docs` when the application is running. The API follows OpenAPI 3.0 specifications and includes:
-
-- Request/response schemas
-- Authentication requirements
-- Example requests and responses
-- Error codes and descriptions
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Disclaimer
-
-This tool is for educational and testing purposes only. Users are responsible for ensuring compliance with Gmail's Terms of Service and applicable laws. The developers are not responsible for any misuse of this software.
-
-## Support
-
-For support and questions:
+## 🤝 Support
 
 - Create an issue on GitHub
-- Check the documentation in the `docs/` directory
-- Review the API documentation at `/docs`
+- Check API documentation at `/docs`
+- Review logs in `logs/` directory
+- DM for me or join discord suport [DISCORD](https://discord.gg/3vXZ2V2)
+
+---
 
 ## Changelog
 
-See CHANGELOG.md for version history and updates.
+See [CHANGELOG.md](CHANGELOG.md) for version history.
+
+## 📄 License
+
+This project is licensed under the **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License**.
+
+- ✅ **Free for educational and personal use**
+- ❌ **Commercial use requires permission**
+- ❌ **Modifications and derivatives not allowed**
+
+For commercial licensing, contact: [work.niruss.dev@gmail.com](mailto:work.niruss.dev@gmail.com)
+
+See [LICENSE](LICENSE) for full terms.
