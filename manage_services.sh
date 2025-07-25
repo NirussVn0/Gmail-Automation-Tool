@@ -37,7 +37,7 @@ ServiceController::stop_services() {
             pm2 delete all
         fi
         
-        pkill -f "uvicorn.*main:app" || true
+        pkill -f "uvicorn.*backend.main:app" || true
         pkill -f "next.*dev\|next.*start" || true
         
         echo "All services stopped"
@@ -66,7 +66,7 @@ ServiceController::show_status() {
         else
             echo "PM2 not installed. Checking processes manually..."
             
-            if pgrep -f "uvicorn.*main:app" > /dev/null; then
+            if pgrep -f "uvicorn.*backend.main:app" > /dev/null; then
                 echo "Backend: Running"
             else
                 echo "Backend: Stopped"
@@ -123,7 +123,7 @@ ServiceController::monitor_services() {
         if command -v pm2 &> /dev/null; then
             pm2 monit
         else
-            echo "PM2 not available. Use './start_server.sh -m' for basic monitoring"
+            echo "PM2 not available. Use './run_server.sh -m' for basic monitoring"
         fi
 }
 

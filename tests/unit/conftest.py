@@ -1,21 +1,18 @@
-"""Pytest configuration and fixtures."""
-
 import asyncio
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 
-from src.database.models import Base
-from src.database.connection import DatabaseManager
-from src.utils.config import AppConfig, DatabaseConfig, SecurityConfig
-from src.main import create_app
-from src.core.password_manager import PasswordManager
+from backend.database.models import Base
+from backend.database.connection import DatabaseManager
+from backend.utils.config import AppConfig, DatabaseConfig, SecurityConfig
+from backend.main import create_app
+from backend.core.password_manager import PasswordManager
 
 
 @pytest.fixture(scope="session")
 def event_loop():
-    """Create an instance of the default event loop for the test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
@@ -23,7 +20,6 @@ def event_loop():
 
 @pytest.fixture(scope="session")
 def test_config():
-    """Create test configuration."""
     return AppConfig(
         database=DatabaseConfig(
             url="sqlite:///:memory:",
@@ -39,7 +35,6 @@ def test_config():
 
 @pytest.fixture(scope="session")
 def test_engine(test_config):
-    """Create test database engine."""
     engine = create_engine(
         test_config.database.url,
         echo=test_config.database.echo
@@ -51,42 +46,35 @@ def test_engine(test_config):
 
 @pytest.fixture(scope="function")
 def test_session(test_engine):
-    """Create test database session."""
     Session = sessionmaker(bind=test_engine)
     session = Session()
     
-    # Start a transaction
     transaction = session.begin()
     
     yield session
     
-    # Rollback transaction to clean up
     transaction.rollback()
     session.close()
 
 
 @pytest.fixture(scope="function")
 def test_db_manager(test_config):
-    """Create test database manager."""
     return DatabaseManager(test_config.database)
 
 
 @pytest.fixture(scope="function")
 def test_password_manager(test_config):
-    """Create test password manager."""
     return PasswordManager(test_config.security)
 
 
 @pytest.fixture(scope="function")
 def test_client(test_config):
-    """Create test FastAPI client."""
     app = create_app()
     return TestClient(app)
 
 
 @pytest.fixture
 def sample_account_data():
-    """Sample account data for testing."""
     return {
         "email": "test@gmail.com",
         "password": "TestPassword123",
@@ -100,7 +88,6 @@ def sample_account_data():
 
 @pytest.fixture
 def sample_proxy_data():
-    """Sample proxy data for testing."""
     return {
         "host": "127.0.0.1",
         "port": 8080,
@@ -117,7 +104,6 @@ def sample_proxy_data():
 
 @pytest.fixture
 def sample_verification_data():
-    """Sample verification data for testing."""
     return {
         "account_id": 1,
         "phone_number": "+1234567890",

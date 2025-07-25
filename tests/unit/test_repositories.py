@@ -3,8 +3,8 @@
 import pytest
 from datetime import datetime, timedelta
 
-from src.database.models import AccountStatus, ProxyStatus, VerificationStatus
-from src.database.repositories import (
+from backend.database.models import AccountStatus, ProxyStatus, VerificationStatus
+from backend.database.repositories import (
     GmailAccountRepository,
     ProxyRepository,
     VerificationSessionRepository,

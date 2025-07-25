@@ -1,5 +1,3 @@
-"""API routes for Gmail account management."""
-
 import math
 from typing import List, Optional
 
@@ -38,22 +36,17 @@ async def list_accounts(
     search: Optional[str] = Query(None, description="Search by email"),
     account_repo: GmailAccountRepository = Depends(get_account_repository),
 ) -> GmailAccountList:
-    """Get paginated list of Gmail accounts."""
     try:
-        # Calculate offset
         offset = (page - 1) * per_page
-        
-        # Get accounts with filters
+
         if status:
             accounts = account_repo.get_by_status(status)
         else:
             accounts = account_repo.get_all(limit=per_page, offset=offset)
-        
-        # Apply search filter if provided
+
         if search:
             accounts = [acc for acc in accounts if search.lower() in acc.email.lower()]
-        
-        # Get total count
+
         total = account_repo.count()
         pages = math.ceil(total / per_page)
         
@@ -78,7 +71,6 @@ async def get_account(
     account_id: int,
     account_repo: GmailAccountRepository = Depends(get_account_repository),
 ) -> GmailAccountResponse:
-    """Get a specific Gmail account by ID."""
     account = account_repo.get_by_id(account_id)
     if not account:
         raise HTTPException(
@@ -97,20 +89,16 @@ async def create_account(
     audit_repo: AuditLogRepository = Depends(get_audit_log_repository),
     db: Session = Depends(get_db),
 ) -> GmailAccountResponse:
-    """Create a new Gmail account."""
     try:
-        # Check if email already exists
         existing_account = account_repo.get_by_email(account_data.email)
         if existing_account:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Account with this email already exists"
             )
-        
-        # Encrypt password
+
         encrypted_password = password_manager.encrypt_password(account_data.password)
-        
-        # Create account
+
         account = account_repo.create(
             email=account_data.email,
             password_encrypted=encrypted_password,
@@ -121,10 +109,9 @@ async def create_account(
             phone_number=account_data.phone_number,
             status=AccountStatus.PENDING
         )
-        
+
         db.commit()
-        
-        # Log audit event
+
         audit_repo.log_event(
             event_type="account_creation",
             entity_type="account",
@@ -158,17 +145,14 @@ async def update_account(
     audit_repo: AuditLogRepository = Depends(get_audit_log_repository),
     db: Session = Depends(get_db),
 ) -> GmailAccountResponse:
-    """Update a Gmail account."""
     try:
-        # Get existing account
         account = account_repo.get_by_id(account_id)
         if not account:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Account not found"
             )
-        
-        # Update fields
+
         update_data = account_data.dict(exclude_unset=True)
         updated_account = account_repo.update(account_id, **update_data)
         
@@ -180,7 +164,6 @@ async def update_account(
         
         db.commit()
         
-        # Log audit event
         audit_repo.log_event(
             event_type="account_update",
             entity_type="account",
@@ -214,17 +197,14 @@ async def delete_account(
     audit_repo: AuditLogRepository = Depends(get_audit_log_repository),
     db: Session = Depends(get_db),
 ) -> None:
-    """Delete a Gmail account."""
     try:
-        # Get account for logging
         account = account_repo.get_by_id(account_id)
         if not account:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Account not found"
             )
-        
-        # Delete account
+
         success = account_repo.delete(account_id)
         if not success:
             raise HTTPException(
@@ -234,7 +214,6 @@ async def delete_account(
         
         db.commit()
         
-        # Log audit event
         audit_repo.log_event(
             event_type="account_deletion",
             entity_type="account",
@@ -267,28 +246,23 @@ async def create_batch_accounts(
     audit_repo: AuditLogRepository = Depends(get_audit_log_repository),
     db: Session = Depends(get_db),
 ) -> BatchOperationResult:
-    """Create multiple Gmail accounts in batch."""
     try:
         created_accounts = []
         failed_accounts = []
         
         for i in range(batch_data.count):
             try:
-                # Generate account data
                 sequence_id = batch_data.starting_id + i
                 email = f"{batch_data.base_name}{sequence_id}@gmail.com"
                 password = password_manager.generate_password(batch_data.base_password, sequence_id)
-                
-                # Check if email already exists
+
                 existing_account = account_repo.get_by_email(email)
                 if existing_account:
                     failed_accounts.append(sequence_id)
                     continue
-                
-                # Encrypt password
+
                 encrypted_password = password_manager.encrypt_password(password)
-                
-                # Create account
+
                 account = account_repo.create(
                     email=email,
                     password_encrypted=encrypted_password,
@@ -296,10 +270,9 @@ async def create_batch_accounts(
                     last_name="Test",
                     status=AccountStatus.PENDING
                 )
-                
+
                 created_accounts.append(account.id)
-                
-                # Log audit event
+
                 audit_repo.log_event(
                     event_type="batch_account_creation",
                     entity_type="account",
@@ -338,7 +311,6 @@ async def create_batch_accounts(
 async def get_account_stats(
     account_repo: GmailAccountRepository = Depends(get_account_repository),
 ) -> AccountStats:
-    """Get account statistics summary."""
     try:
         stats = account_repo.get_creation_stats()
         
@@ -367,7 +339,6 @@ async def retry_account_creation(
     audit_repo: AuditLogRepository = Depends(get_audit_log_repository),
     db: Session = Depends(get_db),
 ) -> GmailAccountResponse:
-    """Retry account creation for a failed account."""
     try:
         account = account_repo.get_by_id(account_id)
         if not account:
@@ -382,11 +353,9 @@ async def retry_account_creation(
                 detail="Account is not in a retryable state"
             )
         
-        # Reset account status
         updated_account = account_repo.update_status(account_id, AccountStatus.PENDING)
         db.commit()
         
-        # Log audit event
         audit_repo.log_event(
             event_type="account_retry",
             entity_type="account",

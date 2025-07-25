@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'gmail-automation-backend',
       script: 'python',
-      args: '-m uvicorn src.main:app --host 0.0.0.0 --port 8000',
+      args: '-m uvicorn backend.main:app --host 0.0.0.0 --port 8000',
       cwd: '/mnt/b/__CODEBASE__/tool_email_proxy',
       instances: 1,
       exec_mode: 'fork',

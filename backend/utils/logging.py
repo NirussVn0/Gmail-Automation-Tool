@@ -1,5 +1,3 @@
-"""Structured logging configuration with audit trail support."""
-
 import logging
 import logging.handlers
 import sys
@@ -14,8 +12,6 @@ from .config import LoggingConfig
 
 
 class AuditLogger:
-    """Audit logger for tracking sensitive operations."""
-    
     def __init__(self, logger_name: str = "audit"):
         self.logger = structlog.get_logger(logger_name)
     
@@ -27,7 +23,6 @@ class AuditLogger:
         error_message: Optional[str] = None,
         **kwargs: Any
     ) -> None:
-        """Log account creation attempt."""
         self.logger.info(
             "account_creation_attempt",
             email=email,
@@ -45,7 +40,6 @@ class AuditLogger:
         response_time: Optional[float] = None,
         **kwargs: Any
     ) -> None:
-        """Log proxy usage."""
         self.logger.info(
             "proxy_usage",
             proxy_url=proxy_url,
@@ -63,7 +57,6 @@ class AuditLogger:
         success: bool,
         **kwargs: Any
     ) -> None:
-        """Log phone verification attempt."""
         self.logger.info(
             "verification_attempt",
             email=email,
@@ -80,7 +73,6 @@ class AuditLogger:
         description: str,
         **kwargs: Any
     ) -> None:
-        """Log security-related events."""
         self.logger.warning(
             "security_event",
             event_type=event_type,
@@ -91,9 +83,6 @@ class AuditLogger:
 
 
 def setup_logging(config: LoggingConfig) -> None:
-    """Setup structured logging with rich console output and file logging."""
-    
-    # Configure structlog
     structlog.configure(
         processors=[
             structlog.stdlib.filter_by_level,
@@ -112,14 +101,11 @@ def setup_logging(config: LoggingConfig) -> None:
         cache_logger_on_first_use=True,
     )
     
-    # Setup root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(getattr(logging, config.level))
     
-    # Clear existing handlers
     root_logger.handlers.clear()
     
-    # Console handler with rich formatting
     console = Console()
     console_handler = RichHandler(
         console=console,
@@ -130,14 +116,12 @@ def setup_logging(config: LoggingConfig) -> None:
     )
     console_handler.setLevel(getattr(logging, config.level))
     
-    # Console formatter
     console_formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     console_handler.setFormatter(console_formatter)
     root_logger.addHandler(console_handler)
     
-    # File handler (if configured)
     if config.file_path:
         log_file = Path(config.file_path)
         log_file.parent.mkdir(parents=True, exist_ok=True)
@@ -150,12 +134,10 @@ def setup_logging(config: LoggingConfig) -> None:
         )
         file_handler.setLevel(getattr(logging, config.level))
         
-        # File formatter (JSON for structured logging)
         file_formatter = logging.Formatter(config.format)
         file_handler.setFormatter(file_formatter)
         root_logger.addHandler(file_handler)
     
-    # Setup audit logger with separate file
     if config.file_path:
         audit_log_file = Path(config.file_path).parent / "audit.log"
         audit_handler = logging.handlers.RotatingFileHandler(
@@ -170,8 +152,7 @@ def setup_logging(config: LoggingConfig) -> None:
             "%(asctime)s - AUDIT - %(levelname)s - %(message)s"
         )
         audit_handler.setFormatter(audit_formatter)
-        
-        # Create audit logger
+
         audit_logger = logging.getLogger("audit")
         audit_logger.addHandler(audit_handler)
         audit_logger.setLevel(logging.INFO)
@@ -179,28 +160,22 @@ def setup_logging(config: LoggingConfig) -> None:
 
 
 def get_logger(name: str) -> structlog.BoundLogger:
-    """Get a structured logger instance."""
     return structlog.get_logger(name)
 
 
 def get_audit_logger() -> AuditLogger:
-    """Get the audit logger instance."""
     return AuditLogger()
 
 
 class LoggerMixin:
-    """Mixin class to add logging capabilities to other classes."""
-    
     @property
     def logger(self) -> structlog.BoundLogger:
-        """Get logger for this class."""
         if not hasattr(self, "_logger"):
             self._logger = get_logger(self.__class__.__name__)
         return self._logger
     
     @property
     def audit_logger(self) -> AuditLogger:
-        """Get audit logger for this class."""
         if not hasattr(self, "_audit_logger"):
             self._audit_logger = get_audit_logger()
         return self._audit_logger

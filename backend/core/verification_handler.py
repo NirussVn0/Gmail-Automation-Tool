@@ -1,5 +1,3 @@
-"""Phone verification handler with SMS service integration."""
-
 import asyncio
 import re
 from abc import ABC, abstractmethod
@@ -17,48 +15,28 @@ from ..utils.logging import LoggerMixin
 
 
 class SMSServiceProvider(ABC, LoggerMixin):
-    """Abstract base class for SMS verification service providers."""
-    
     def __init__(self, api_key: str, base_url: str):
         self.api_key = api_key
         self.base_url = base_url
     
     @abstractmethod
     async def get_phone_number(self, country: str = "US", service: str = "google") -> Tuple[bool, Optional[str], Optional[str]]:
-        """Get a phone number for verification.
-        
-        Returns:
-            Tuple of (success, phone_number, session_id)
-        """
         pass
     
     @abstractmethod
     async def get_verification_code(self, session_id: str, timeout: int = 300) -> Tuple[bool, Optional[str]]:
-        """Get verification code from SMS.
-        
-        Returns:
-            Tuple of (success, verification_code)
-        """
         pass
     
     @abstractmethod
     async def release_phone_number(self, session_id: str) -> bool:
-        """Release the phone number back to the pool."""
         pass
     
     @abstractmethod
     async def get_balance(self) -> Tuple[bool, Optional[float]]:
-        """Get account balance.
-        
-        Returns:
-            Tuple of (success, balance)
-        """
         pass
 
 
 class TextVerifiedProvider(SMSServiceProvider):
-    """TextVerified SMS service provider."""
-    
     def __init__(self, api_key: str):
         super().__init__(api_key, "https://www.textverified.com/api")
         self.service_map = {
@@ -70,7 +48,6 @@ class TextVerifiedProvider(SMSServiceProvider):
         }
     
     async def get_phone_number(self, country: str = "US", service: str = "google") -> Tuple[bool, Optional[str], Optional[str]]:
-        """Get a phone number from TextVerified."""
         try:
             service_name = self.service_map.get(service.lower(), "Google")
             
@@ -110,7 +87,6 @@ class TextVerifiedProvider(SMSServiceProvider):
             return False, None, None
     
     async def get_verification_code(self, session_id: str, timeout: int = 300) -> Tuple[bool, Optional[str]]:
-        """Get verification code from TextVerified."""
         try:
             url = f"{self.base_url}/Users/{self.api_key}/Verifications/{session_id}"
             
@@ -126,8 +102,7 @@ class TextVerifiedProvider(SMSServiceProvider):
                                 sms_data = result.get("sms")
                                 if sms_data:
                                     sms_text = sms_data.get("text", "")
-                                    
-                                    # Extract verification code from SMS text
+
                                     code = self._extract_verification_code(sms_text)
                                     if code:
                                         self.logger.info(
@@ -136,8 +111,7 @@ class TextVerifiedProvider(SMSServiceProvider):
                                             code_length=len(code)
                                         )
                                         return True, code
-                            
-                            # Wait before next check
+
                             await asyncio.sleep(5)
                         else:
                             self.logger.error(f"HTTP error checking SMS: {response.status}")
@@ -151,11 +125,9 @@ class TextVerifiedProvider(SMSServiceProvider):
             return False, None
     
     async def release_phone_number(self, session_id: str) -> bool:
-        """Release phone number (TextVerified doesn't require explicit release)."""
         return True
     
     async def get_balance(self) -> Tuple[bool, Optional[float]]:
-        """Get account balance from TextVerified."""
         try:
             url = f"{self.base_url}/Users/{self.api_key}"
             
@@ -177,15 +149,13 @@ class TextVerifiedProvider(SMSServiceProvider):
             return False, None
     
     def _extract_verification_code(self, sms_text: str) -> Optional[str]:
-        """Extract verification code from SMS text."""
-        # Common patterns for verification codes
         patterns = [
-            r'\b(\d{6})\b',  # 6-digit code
-            r'\b(\d{5})\b',  # 5-digit code
-            r'\b(\d{4})\b',  # 4-digit code
-            r'code[:\s]+(\d+)',  # "code: 123456"
-            r'verification[:\s]+(\d+)',  # "verification: 123456"
-            r'confirm[:\s]+(\d+)',  # "confirm: 123456"
+            r'\b(\d{6})\b',
+            r'\b(\d{5})\b',
+            r'\b(\d{4})\b',
+            r'code[:\s]+(\d+)',
+            r'verification[:\s]+(\d+)',
+            r'confirm[:\s]+(\d+)',
         ]
         
         for pattern in patterns:
@@ -197,8 +167,6 @@ class TextVerifiedProvider(SMSServiceProvider):
 
 
 class SMSActivateProvider(SMSServiceProvider):
-    """SMS-Activate service provider."""
-    
     def __init__(self, api_key: str):
         super().__init__(api_key, "https://sms-activate.org/stubs/handler_api.php")
         self.service_map = {
@@ -210,7 +178,6 @@ class SMSActivateProvider(SMSServiceProvider):
         }
     
     async def get_phone_number(self, country: str = "0", service: str = "google") -> Tuple[bool, Optional[str], Optional[str]]:
-        """Get a phone number from SMS-Activate."""
         try:
             service_code = self.service_map.get(service.lower(), "go")
             
@@ -251,7 +218,6 @@ class SMSActivateProvider(SMSServiceProvider):
             return False, None, None
     
     async def get_verification_code(self, session_id: str, timeout: int = 300) -> Tuple[bool, Optional[str]]:
-        """Get verification code from SMS-Activate."""
         try:
             params = {
                 "api_key": self.api_key,
@@ -278,7 +244,6 @@ class SMSActivateProvider(SMSServiceProvider):
                                     )
                                     return True, code
                             elif result == "STATUS_WAIT_CODE":
-                                # Still waiting for SMS
                                 await asyncio.sleep(5)
                             else:
                                 self.logger.error(f"SMS-Activate status error: {result}")
@@ -293,12 +258,11 @@ class SMSActivateProvider(SMSServiceProvider):
             return False, None
     
     async def release_phone_number(self, session_id: str) -> bool:
-        """Release phone number back to SMS-Activate."""
         try:
             params = {
                 "api_key": self.api_key,
                 "action": "setStatus",
-                "status": "8",  # Cancel activation
+                "status": "8",
                 "id": session_id
             }
             
@@ -314,7 +278,6 @@ class SMSActivateProvider(SMSServiceProvider):
             return False
     
     async def get_balance(self) -> Tuple[bool, Optional[float]]:
-        """Get account balance from SMS-Activate."""
         try:
             params = {
                 "api_key": self.api_key,
@@ -339,25 +302,19 @@ class SMSActivateProvider(SMSServiceProvider):
 
 
 class VerificationHandler(LoggerMixin):
-    """Main verification handler that manages SMS verification process."""
-    
     def __init__(self, verification_repo: VerificationSessionRepository, session: Session):
         self.verification_repo = verification_repo
         self.session = session
         self.providers: Dict[str, SMSServiceProvider] = {}
         
-        # Initialize providers based on configuration
         config = get_config()
         self._initialize_providers(config)
     
     def _initialize_providers(self, config) -> None:
-        """Initialize SMS service providers."""
-        # Add TextVerified if configured
         if hasattr(config, 'sms_service_api_key') and config.sms_service_api_key:
             if config.sms_service_primary == "textverified":
                 self.providers["textverified"] = TextVerifiedProvider(config.sms_service_api_key)
-        
-        # Add SMS-Activate if configured
+
         if hasattr(config, 'sms_service_backup_api_key') and config.sms_service_backup_api_key:
             if config.sms_service_backup == "sms-activate":
                 self.providers["sms-activate"] = SMSActivateProvider(config.sms_service_backup_api_key)
@@ -369,22 +326,18 @@ class VerificationHandler(LoggerMixin):
         country: str = "US",
         preferred_provider: Optional[str] = None
     ) -> Tuple[bool, Optional[VerificationSession]]:
-        """Start phone verification process."""
         try:
-            # Select provider
             provider = self._select_provider(preferred_provider)
             if not provider:
                 self.logger.error("No SMS providers available")
                 return False, None
-            
-            # Get phone number
+
             success, phone_number, service_session_id = await provider.get_phone_number(country, service)
-            
+
             if not success or not phone_number:
                 self.logger.error("Failed to get phone number")
                 return False, None
-            
-            # Create verification session
+
             verification_session = self.verification_repo.create(
                 account_id=account_id,
                 phone_number=phone_number,
@@ -410,25 +363,21 @@ class VerificationHandler(LoggerMixin):
             return False, None
     
     async def get_verification_code(self, session_id: int, timeout: int = 300) -> Tuple[bool, Optional[str]]:
-        """Get verification code for a session."""
         try:
             verification_session = self.verification_repo.get_by_id(session_id)
             if not verification_session:
                 return False, None
             
-            # Get provider
             provider = self._get_provider_by_name(verification_session.service_name)
             if not provider:
                 return False, None
             
-            # Get verification code
             success, code = await provider.get_verification_code(
                 verification_session.service_session_id,
                 timeout
             )
             
             if success and code:
-                # Update session
                 self.verification_repo.update_verification_code(session_id, code)
                 self.session.commit()
                 
@@ -440,7 +389,6 @@ class VerificationHandler(LoggerMixin):
                 
                 return True, code
             else:
-                # Mark as failed
                 verification_session.status = VerificationStatus.FAILED
                 self.session.commit()
                 return False, None
@@ -450,7 +398,6 @@ class VerificationHandler(LoggerMixin):
             return False, None
     
     async def complete_verification(self, session_id: int) -> bool:
-        """Mark verification as completed."""
         try:
             verification_session = self.verification_repo.get_by_id(session_id)
             if not verification_session:
@@ -468,35 +415,29 @@ class VerificationHandler(LoggerMixin):
             return False
     
     def _select_provider(self, preferred_provider: Optional[str] = None) -> Optional[SMSServiceProvider]:
-        """Select an SMS provider."""
         if preferred_provider and preferred_provider in self.providers:
             return self.providers[preferred_provider]
         
-        # Return first available provider
         if self.providers:
             return next(iter(self.providers.values()))
         
         return None
     
     def _get_provider_by_name(self, provider_name: str) -> Optional[SMSServiceProvider]:
-        """Get provider by class name."""
         for provider in self.providers.values():
             if provider.__class__.__name__ == provider_name:
                 return provider
         return None
     
     async def cleanup_expired_sessions(self) -> int:
-        """Clean up expired verification sessions."""
         try:
             expired_sessions = self.verification_repo.get_expired_sessions()
             
             for session in expired_sessions:
-                # Release phone number if possible
                 provider = self._get_provider_by_name(session.service_name)
                 if provider and session.service_session_id:
                     await provider.release_phone_number(session.service_session_id)
                 
-                # Update status
                 session.status = VerificationStatus.EXPIRED
             
             self.session.commit()

@@ -217,8 +217,8 @@ start_backend() {
     export LOG_LEVEL="INFO"
     
     local main_module="main:app"
-    if [[ -f "src/main.py" ]]; then
-        main_module="src.main:app"
+    if [[ -f "backend/main.py" ]]; then
+        main_module="backend.main:app"
     elif [[ -f "app/main.py" ]]; then
         main_module="app.main:app"
     fi

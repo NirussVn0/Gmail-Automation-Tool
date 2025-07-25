@@ -3,7 +3,7 @@
 import pytest
 from cryptography.fernet import InvalidToken
 
-from src.core.password_manager import PasswordManager, SecureStorage
+from backend.core.password_manager import PasswordManager, SecureStorage
 
 
 class TestPasswordManager:

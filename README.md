@@ -14,6 +14,7 @@ A comprehensive tool for automated Gmail account creation with proxy support, ph
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - **Python**: 3.8+ (recommended 3.11+)
 - **Node.js**: 18.0+
 - **Git**: Latest version
@@ -31,22 +32,26 @@ chmod +x run_all.sh
 ```
 
 **That's it!** The script will:
+
 - ✅ Install all dependencies automatically
 - ✅ Set up Python virtual environment
 - ✅ Start backend API (port 8001)
 - ✅ Start frontend dashboard (port 3001)
 
 ### Access Application
+
 - **Dashboard**: http://localhost:3001
 - **API Docs**: http://localhost:8001/docs
 - **Health Check**: http://localhost:8001/health
 
 ### Stop Services
+
 Press `Ctrl+C` in the terminal
 
 ## 🔧 Alternative Methods
 
 ### Production Deployment
+
 ```bash
 # Install PM2 globally
 npm install -g pm2
@@ -59,12 +64,13 @@ npm install -g pm2
 ```
 
 ### Manual Setup (if scripts fail)
+
 ```bash
 # Backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-python -m uvicorn src.main:app --host 0.0.0.0 --port 8001
+python -m uvicorn backend.main:app --host 0.0.0.0 --port 8001
 
 # Frontend (new terminal)
 cd dashboard
@@ -75,6 +81,7 @@ npm run dev
 ## 📋 Features
 
 ### Core Functionality
+
 - **Bulk Account Creation**: Create multiple Gmail accounts automatically
 - **Proxy Management**: Advanced proxy rotation with health monitoring
 - **SMS Verification**: Integrated phone verification services
@@ -82,6 +89,7 @@ npm run dev
 - **Anti-detection**: Browser fingerprinting and behavior randomization
 
 ### Advanced Features
+
 - **Multiple Proxy Strategies**: Round-robin, random, weighted selection
 - **Health Monitoring**: Automatic proxy health checks and failover
 - **Concurrent Processing**: Parallel account creation with rate limiting
@@ -90,7 +98,9 @@ npm run dev
 ## 🛠️ Configuration
 
 ### Environment Variables
+
 Key settings in `.env` file:
+
 ```env
 # Security (CHANGE IN PRODUCTION!)
 SECURITY_SECRET_KEY="your-secret-key-32chars-minimum"

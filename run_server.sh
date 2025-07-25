@@ -83,7 +83,6 @@ start_backend() {
         log_info "Creating Python virtualenv..."
         "$PYTHON_BIN" -m venv venv
     fi
-    # shellcheck disable=SC1091
     source venv/bin/activate
 
     log_info "Upgrading build tools..."
@@ -117,7 +116,7 @@ start_backend() {
     fi
 
     local main_module="main:app"
-    [[ -f "src/main.py" ]] && main_module="src.main:app"
+    [[ -f "backend/main.py" ]] && main_module="backend.main:app"
 
     log_info "Launching uvicorn..."
     python -m uvicorn "$main_module" \

@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # Main application
@@ -52,7 +52,7 @@ services:
   # Celery worker for background tasks
   celery-worker:
     build: .
-    command: celery -A src.tasks.celery_app worker --loglevel=info
+    command: celery -A backend.tasks.celery_app worker --loglevel=info
     environment:
       - DB_URL=postgresql://gmail_user:gmail_password@postgres:5432/gmail_automation
       - REDIS_URL=redis://redis:6379/0
@@ -72,7 +72,7 @@ services:
   # Celery beat for scheduled tasks
   celery-beat:
     build: .
-    command: celery -A src.tasks.celery_app beat --loglevel=info
+    command: celery -A backend.tasks.celery_app beat --loglevel=info
     environment:
       - DB_URL=postgresql://gmail_user:gmail_password@postgres:5432/gmail_automation
       - REDIS_URL=redis://redis:6379/0

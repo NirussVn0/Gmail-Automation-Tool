@@ -1,5 +1,3 @@
-"""CAPTCHA detection and handling system."""
-
 import asyncio
 import base64
 import io
@@ -19,50 +17,29 @@ from ..utils.logging import LoggerMixin
 
 
 class CaptchaSolver(ABC, LoggerMixin):
-    """Abstract base class for CAPTCHA solving services."""
-    
     def __init__(self, api_key: str):
         self.api_key = api_key
     
     @abstractmethod
     async def solve_image_captcha(self, image_data: bytes) -> Tuple[bool, Optional[str]]:
-        """Solve an image-based CAPTCHA.
-        
-        Returns:
-            Tuple of (success, solution)
-        """
         pass
     
     @abstractmethod
     async def solve_recaptcha_v2(self, site_key: str, page_url: str) -> Tuple[bool, Optional[str]]:
-        """Solve a reCAPTCHA v2.
-        
-        Returns:
-            Tuple of (success, token)
-        """
         pass
     
     @abstractmethod
     async def get_balance(self) -> Tuple[bool, Optional[float]]:
-        """Get account balance.
-        
-        Returns:
-            Tuple of (success, balance)
-        """
         pass
 
 
 class TwoCaptchaSolver(CaptchaSolver):
-    """2captcha.com CAPTCHA solving service."""
-    
     def __init__(self, api_key: str):
         super().__init__(api_key)
         self.base_url = "http://2captcha.com"
     
     async def solve_image_captcha(self, image_data: bytes) -> Tuple[bool, Optional[str]]:
-        """Solve an image CAPTCHA using 2captcha."""
         try:
-            # Submit CAPTCHA
             submit_url = f"{self.base_url}/in.php"
             files = {"file": ("captcha.png", image_data, "image/png")}
             data = {
@@ -82,8 +59,7 @@ class TwoCaptchaSolver(CaptchaSolver):
                 return False, None
             
             captcha_id = result.split("|")[1]
-            
-            # Wait for solution
+
             return await self._wait_for_solution(captcha_id)
             
         except Exception as e:
@@ -91,9 +67,7 @@ class TwoCaptchaSolver(CaptchaSolver):
             return False, None
     
     async def solve_recaptcha_v2(self, site_key: str, page_url: str) -> Tuple[bool, Optional[str]]:
-        """Solve reCAPTCHA v2 using 2captcha."""
         try:
-            # Submit reCAPTCHA
             submit_url = f"{self.base_url}/in.php"
             data = {
                 "key": self.api_key,
@@ -114,8 +88,7 @@ class TwoCaptchaSolver(CaptchaSolver):
                 return False, None
             
             captcha_id = result.split("|")[1]
-            
-            # Wait for solution (reCAPTCHA takes longer)
+
             return await self._wait_for_solution(captcha_id, timeout=300)
             
         except Exception as e:
@@ -123,7 +96,6 @@ class TwoCaptchaSolver(CaptchaSolver):
             return False, None
     
     async def _wait_for_solution(self, captcha_id: str, timeout: int = 120) -> Tuple[bool, Optional[str]]:
-        """Wait for CAPTCHA solution."""
         result_url = f"{self.base_url}/res.php"
         params = {
             "key": self.api_key,
@@ -134,7 +106,7 @@ class TwoCaptchaSolver(CaptchaSolver):
         start_time = time.time()
         
         while time.time() - start_time < timeout:
-            await asyncio.sleep(5)  # Wait 5 seconds between checks
+            await asyncio.sleep(5)
             
             try:
                 response = requests.get(result_url, params=params)
@@ -162,7 +134,6 @@ class TwoCaptchaSolver(CaptchaSolver):
         return False, None
     
     async def get_balance(self) -> Tuple[bool, Optional[float]]:
-        """Get 2captcha account balance."""
         try:
             url = f"{self.base_url}/res.php"
             params = {
@@ -187,8 +158,6 @@ class TwoCaptchaSolver(CaptchaSolver):
 
 
 class CaptchaDetector(LoggerMixin):
-    """Detects various types of CAPTCHAs on web pages."""
-    
     def __init__(self):
         self.captcha_selectors = {
             "recaptcha_v2": [
@@ -220,7 +189,6 @@ class CaptchaDetector(LoggerMixin):
         }
     
     def detect_captcha_type(self, driver: webdriver.Chrome) -> Optional[str]:
-        """Detect the type of CAPTCHA present on the page."""
         try:
             for captcha_type, selectors in self.captcha_selectors.items():
                 for selector in selectors:
@@ -239,9 +207,7 @@ class CaptchaDetector(LoggerMixin):
             return None
     
     def get_captcha_image(self, driver: webdriver.Chrome) -> Optional[bytes]:
-        """Extract CAPTCHA image from the page."""
         try:
-            # Try different selectors for CAPTCHA images
             image_selectors = [
                 "img[src*='captcha']",
                 ".captcha-image img",
@@ -255,8 +221,7 @@ class CaptchaDetector(LoggerMixin):
                     elements = driver.find_elements(By.CSS_SELECTOR, selector)
                     if elements:
                         img_element = elements[0]
-                        
-                        # Get image as base64
+
                         img_base64 = driver.execute_script("""
                             var canvas = document.createElement('canvas');
                             var ctx = canvas.getContext('2d');
@@ -281,9 +246,7 @@ class CaptchaDetector(LoggerMixin):
             return None
     
     def get_recaptcha_site_key(self, driver: webdriver.Chrome) -> Optional[str]:
-        """Extract reCAPTCHA site key from the page."""
         try:
-            # Try different methods to get site key
             selectors = [
                 "[data-sitekey]",
                 ".g-recaptcha[data-sitekey]",
@@ -296,12 +259,10 @@ class CaptchaDetector(LoggerMixin):
                     if elements:
                         element = elements[0]
                         
-                        # Try to get data-sitekey attribute
                         site_key = element.get_attribute("data-sitekey")
                         if site_key:
                             return site_key
                         
-                        # Try to extract from iframe src
                         src = element.get_attribute("src")
                         if src and "k=" in src:
                             site_key = src.split("k=")[1].split("&")[0]
@@ -310,7 +271,6 @@ class CaptchaDetector(LoggerMixin):
                 except Exception:
                     continue
             
-            # Try to find in page source
             page_source = driver.page_source
             if "data-sitekey=" in page_source:
                 start = page_source.find("data-sitekey=") + 14
@@ -326,19 +286,16 @@ class CaptchaDetector(LoggerMixin):
 
 
 class CaptchaHandler(LoggerMixin):
-    """Main CAPTCHA handling system."""
-    
     def __init__(self, solver: Optional[CaptchaSolver] = None):
         self.solver = solver
         self.detector = CaptchaDetector()
     
     async def handle_captcha(self, driver: webdriver.Chrome) -> bool:
-        """Detect and handle any CAPTCHA on the current page."""
         try:
             captcha_type = self.detector.detect_captcha_type(driver)
             
             if not captcha_type:
-                return True  # No CAPTCHA detected
+                return True
             
             if not self.solver:
                 self.logger.warning("CAPTCHA detected but no solver configured")
@@ -359,21 +316,17 @@ class CaptchaHandler(LoggerMixin):
             return False
     
     async def _handle_image_captcha(self, driver: webdriver.Chrome) -> bool:
-        """Handle image-based CAPTCHA."""
         try:
-            # Extract CAPTCHA image
             image_data = self.detector.get_captcha_image(driver)
             if not image_data:
                 self.logger.error("Failed to extract CAPTCHA image")
                 return False
             
-            # Solve CAPTCHA
             success, solution = await self.solver.solve_image_captcha(image_data)
             if not success or not solution:
                 self.logger.error("Failed to solve image CAPTCHA")
                 return False
             
-            # Find input field and enter solution
             input_selectors = [
                 "input[name*='captcha']",
                 ".captcha-input",
@@ -403,24 +356,19 @@ class CaptchaHandler(LoggerMixin):
             return False
     
     async def _handle_recaptcha_v2(self, driver: webdriver.Chrome) -> bool:
-        """Handle reCAPTCHA v2."""
         try:
-            # Get site key
             site_key = self.detector.get_recaptcha_site_key(driver)
             if not site_key:
                 self.logger.error("Failed to extract reCAPTCHA site key")
                 return False
-            
-            # Get current page URL
+
             page_url = driver.current_url
-            
-            # Solve reCAPTCHA
+
             success, token = await self.solver.solve_recaptcha_v2(site_key, page_url)
             if not success or not token:
                 self.logger.error("Failed to solve reCAPTCHA v2")
                 return False
             
-            # Inject token into page
             driver.execute_script(f"""
                 document.getElementById('g-recaptcha-response').innerHTML = '{token}';
                 if (typeof grecaptcha !== 'undefined') {{

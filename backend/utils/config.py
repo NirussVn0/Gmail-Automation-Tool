@@ -1,16 +1,11 @@
-"""Configuration management with environment variables and validation."""
-
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings
-
 
 class DatabaseConfig(BaseSettings):
-    """Database configuration settings."""
-    
     url: str = Field(
         default="sqlite:///./gmail_automation.db",
         description="Database connection URL"
@@ -32,8 +27,6 @@ class DatabaseConfig(BaseSettings):
 
 
 class SecurityConfig(BaseSettings):
-    """Security and encryption configuration."""
-    
     secret_key: str = Field(
         default="your-secret-key-change-this-in-production",
         description="Secret key for encryption and JWT tokens"
@@ -58,7 +51,6 @@ class SecurityConfig(BaseSettings):
     @field_validator("secret_key", "encryption_key", "password_salt")
     @classmethod
     def validate_keys(cls, v: str) -> str:
-        """Validate that security keys are properly set."""
         if v.startswith("your-") and "change-this" in v:
             raise ValueError("Security keys must be changed from default values")
         if len(v) < 32:
@@ -69,8 +61,6 @@ class SecurityConfig(BaseSettings):
 
 
 class ProxyConfig(BaseSettings):
-    """Proxy configuration settings."""
-    
     enabled: bool = Field(
         default=True,
         description="Enable proxy usage"
@@ -95,7 +85,6 @@ class ProxyConfig(BaseSettings):
     @field_validator("rotation_strategy")
     @classmethod
     def validate_rotation_strategy(cls, v: str) -> str:
-        """Validate proxy rotation strategy."""
         allowed_strategies = ["round_robin", "random", "weighted"]
         if v not in allowed_strategies:
             raise ValueError(f"Invalid rotation strategy. Must be one of: {allowed_strategies}")
@@ -105,8 +94,6 @@ class ProxyConfig(BaseSettings):
 
 
 class AccountCreationConfig(BaseSettings):
-    """Account creation configuration."""
-    
     base_name: str = Field(
         default="testuser",
         description="Base name for generated accounts"
@@ -139,7 +126,6 @@ class AccountCreationConfig(BaseSettings):
     @field_validator("delay_min", "delay_max")
     @classmethod
     def validate_delays(cls, v: float) -> float:
-        """Validate delay values."""
         if v < 0:
             raise ValueError("Delay values must be non-negative")
         return v
@@ -148,8 +134,6 @@ class AccountCreationConfig(BaseSettings):
 
 
 class WebDriverConfig(BaseSettings):
-    """WebDriver configuration for browser automation."""
-    
     headless: bool = Field(
         default=True,
         description="Run browser in headless mode"
@@ -187,8 +171,6 @@ class WebDriverConfig(BaseSettings):
 
 
 class LoggingConfig(BaseSettings):
-    """Logging configuration."""
-    
     level: str = Field(
         default="INFO",
         description="Logging level"
@@ -202,7 +184,7 @@ class LoggingConfig(BaseSettings):
         description="Log file path (if None, logs to console only)"
     )
     max_file_size: int = Field(
-        default=10485760,  # 10MB
+        default=10485760,
         description="Maximum log file size in bytes"
     )
     backup_count: int = Field(
@@ -213,7 +195,6 @@ class LoggingConfig(BaseSettings):
     @field_validator("level")
     @classmethod
     def validate_level(cls, v: str) -> str:
-        """Validate logging level."""
         allowed_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in allowed_levels:
             raise ValueError(f"Invalid logging level. Must be one of: {allowed_levels}")
@@ -223,9 +204,6 @@ class LoggingConfig(BaseSettings):
 
 
 class AppConfig(BaseSettings):
-    """Main application configuration."""
-    
-    # Application settings
     app_name: str = Field(
         default="Gmail Automation Tool",
         description="Application name"
@@ -247,7 +225,6 @@ class AppConfig(BaseSettings):
         description="API server port"
     )
     
-    # Component configurations
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     proxy: ProxyConfig = Field(default_factory=ProxyConfig)
@@ -264,12 +241,10 @@ class AppConfig(BaseSettings):
 
 
 def load_config() -> AppConfig:
-    """Load and validate application configuration."""
     return AppConfig()
 
 
 def get_config() -> AppConfig:
-    """Get the current application configuration."""
     if not hasattr(get_config, "_config"):
         get_config._config = load_config()
     return get_config._config

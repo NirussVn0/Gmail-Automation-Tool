@@ -1,5 +1,3 @@
-"""Repository pattern implementation for database operations."""
-
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Type, TypeVar
@@ -23,14 +21,11 @@ T = TypeVar("T")
 
 
 class BaseRepository(ABC, LoggerMixin):
-    """Base repository with common CRUD operations."""
-    
     def __init__(self, session: Session, model_class: Type[T]):
         self.session = session
         self.model_class = model_class
     
     def create(self, **kwargs: Any) -> T:
-        """Create a new entity."""
         entity = self.model_class(**kwargs)
         self.session.add(entity)
         self.session.flush()
@@ -38,20 +33,17 @@ class BaseRepository(ABC, LoggerMixin):
         return entity
     
     def get_by_id(self, entity_id: int) -> Optional[T]:
-        """Get entity by ID."""
         return self.session.query(self.model_class).filter(
             self.model_class.id == entity_id
         ).first()
     
     def get_all(self, limit: Optional[int] = None, offset: int = 0) -> List[T]:
-        """Get all entities with optional pagination."""
         query = self.session.query(self.model_class)
         if limit:
             query = query.limit(limit).offset(offset)
         return query.all()
     
     def update(self, entity_id: int, **kwargs: Any) -> Optional[T]:
-        """Update entity by ID."""
         entity = self.get_by_id(entity_id)
         if entity:
             for key, value in kwargs.items():
@@ -62,7 +54,6 @@ class BaseRepository(ABC, LoggerMixin):
         return entity
     
     def delete(self, entity_id: int) -> bool:
-        """Delete entity by ID."""
         entity = self.get_by_id(entity_id)
         if entity:
             self.session.delete(entity)
@@ -72,30 +63,24 @@ class BaseRepository(ABC, LoggerMixin):
         return False
     
     def count(self) -> int:
-        """Count total entities."""
         return self.session.query(self.model_class).count()
 
 
 class GmailAccountRepository(BaseRepository):
-    """Repository for Gmail account operations."""
-    
     def __init__(self, session: Session):
         super().__init__(session, GmailAccount)
     
     def get_by_email(self, email: str) -> Optional[GmailAccount]:
-        """Get account by email address."""
         return self.session.query(GmailAccount).filter(
             GmailAccount.email == email
         ).first()
     
     def get_by_status(self, status: AccountStatus) -> List[GmailAccount]:
-        """Get accounts by status."""
         return self.session.query(GmailAccount).filter(
             GmailAccount.status == status
         ).all()
     
     def get_pending_accounts(self, limit: Optional[int] = None) -> List[GmailAccount]:
-        """Get accounts pending creation."""
         query = self.session.query(GmailAccount).filter(
             GmailAccount.status == AccountStatus.PENDING
         ).order_by(GmailAccount.created_at)
@@ -106,7 +91,6 @@ class GmailAccountRepository(BaseRepository):
         return query.all()
     
     def get_failed_accounts(self, max_attempts: int = 3) -> List[GmailAccount]:
-        """Get accounts that failed creation but can be retried."""
         return self.session.query(GmailAccount).filter(
             and_(
                 GmailAccount.status == AccountStatus.FAILED,
@@ -115,7 +99,6 @@ class GmailAccountRepository(BaseRepository):
         ).all()
     
     def update_status(self, account_id: int, status: AccountStatus, error_message: Optional[str] = None) -> Optional[GmailAccount]:
-        """Update account status and increment attempt counter."""
         account = self.get_by_id(account_id)
         if account:
             account.status = status
@@ -130,13 +113,11 @@ class GmailAccountRepository(BaseRepository):
         return account
     
     def get_accounts_by_proxy(self, proxy_id: int) -> List[GmailAccount]:
-        """Get accounts using a specific proxy."""
         return self.session.query(GmailAccount).filter(
             GmailAccount.proxy_id == proxy_id
         ).all()
     
     def get_creation_stats(self) -> Dict[str, int]:
-        """Get account creation statistics."""
         stats = {}
         for status in AccountStatus:
             count = self.session.query(GmailAccount).filter(
@@ -148,31 +129,25 @@ class GmailAccountRepository(BaseRepository):
 
 
 class ProxyRepository(BaseRepository):
-    """Repository for proxy operations."""
-    
     def __init__(self, session: Session):
         super().__init__(session, Proxy)
     
     def get_active_proxies(self) -> List[Proxy]:
-        """Get all active proxies."""
         return self.session.query(Proxy).filter(
             Proxy.status == ProxyStatus.ACTIVE
         ).all()
     
     def get_by_host_port(self, host: str, port: int) -> Optional[Proxy]:
-        """Get proxy by host and port."""
         return self.session.query(Proxy).filter(
             and_(Proxy.host == host, Proxy.port == port)
         ).first()
     
     def get_least_used_proxy(self) -> Optional[Proxy]:
-        """Get the proxy with the least current usage."""
         return self.session.query(Proxy).filter(
             Proxy.status == ProxyStatus.ACTIVE
         ).order_by(Proxy.current_usage).first()
     
     def get_best_performing_proxies(self, limit: int = 10) -> List[Proxy]:
-        """Get best performing proxies by success rate and response time."""
         return self.session.query(Proxy).filter(
             and_(
                 Proxy.status == ProxyStatus.ACTIVE,
@@ -189,17 +164,14 @@ class ProxyRepository(BaseRepository):
         response_time_ms: float,
         success: bool
     ) -> Optional[Proxy]:
-        """Update proxy performance statistics."""
         proxy = self.get_by_id(proxy_id)
         if proxy:
             proxy.total_requests += 1
             if success:
                 proxy.successful_requests += 1
             
-            # Calculate success rate
             proxy.success_rate = proxy.successful_requests / proxy.total_requests
-            
-            # Update response time (moving average)
+
             if proxy.response_time_ms is None:
                 proxy.response_time_ms = response_time_ms
             else:
@@ -218,7 +190,6 @@ class ProxyRepository(BaseRepository):
         return proxy
     
     def increment_usage(self, proxy_id: int) -> Optional[Proxy]:
-        """Increment proxy current usage counter."""
         proxy = self.get_by_id(proxy_id)
         if proxy:
             proxy.current_usage += 1
@@ -226,7 +197,6 @@ class ProxyRepository(BaseRepository):
         return proxy
     
     def decrement_usage(self, proxy_id: int) -> Optional[Proxy]:
-        """Decrement proxy current usage counter."""
         proxy = self.get_by_id(proxy_id)
         if proxy and proxy.current_usage > 0:
             proxy.current_usage -= 1
@@ -235,19 +205,15 @@ class ProxyRepository(BaseRepository):
 
 
 class VerificationSessionRepository(BaseRepository):
-    """Repository for verification session operations."""
-    
     def __init__(self, session: Session):
         super().__init__(session, VerificationSession)
     
     def get_by_account_id(self, account_id: int) -> List[VerificationSession]:
-        """Get verification sessions for an account."""
         return self.session.query(VerificationSession).filter(
             VerificationSession.account_id == account_id
         ).order_by(desc(VerificationSession.created_at)).all()
     
     def get_pending_verifications(self) -> List[VerificationSession]:
-        """Get pending verification sessions."""
         return self.session.query(VerificationSession).filter(
             VerificationSession.status.in_([
                 VerificationStatus.PENDING,
@@ -256,7 +222,6 @@ class VerificationSessionRepository(BaseRepository):
         ).all()
     
     def get_expired_sessions(self) -> List[VerificationSession]:
-        """Get expired verification sessions."""
         now = datetime.utcnow()
         return self.session.query(VerificationSession).filter(
             and_(
@@ -273,7 +238,6 @@ class VerificationSessionRepository(BaseRepository):
         session_id: int,
         verification_code: str
     ) -> Optional[VerificationSession]:
-        """Update verification session with received code."""
         session = self.get_by_id(session_id)
         if session:
             session.verification_code = verification_code
@@ -291,19 +255,15 @@ class VerificationSessionRepository(BaseRepository):
 
 
 class CreationJobRepository(BaseRepository):
-    """Repository for creation job operations."""
-    
     def __init__(self, session: Session):
         super().__init__(session, CreationJob)
     
     def get_active_jobs(self) -> List[CreationJob]:
-        """Get active creation jobs."""
         return self.session.query(CreationJob).filter(
             CreationJob.status.in_(["pending", "running"])
         ).all()
     
     def get_job_by_name(self, name: str) -> Optional[CreationJob]:
-        """Get job by name."""
         return self.session.query(CreationJob).filter(
             CreationJob.name == name
         ).first()
@@ -315,7 +275,6 @@ class CreationJobRepository(BaseRepository):
         accounts_failed: int,
         current_batch: int
     ) -> Optional[CreationJob]:
-        """Update job progress."""
         job = self.get_by_id(job_id)
         if job:
             job.accounts_created = accounts_created
@@ -335,8 +294,6 @@ class CreationJobRepository(BaseRepository):
 
 
 class AuditLogRepository(BaseRepository):
-    """Repository for audit log operations."""
-    
     def __init__(self, session: Session):
         super().__init__(session, AuditLog)
     
@@ -352,7 +309,6 @@ class AuditLogRepository(BaseRepository):
         duration_ms: Optional[float] = None,
         error_message: Optional[str] = None
     ) -> AuditLog:
-        """Create an audit log entry."""
         import json
         
         audit_log = AuditLog(
@@ -373,7 +329,6 @@ class AuditLogRepository(BaseRepository):
         return audit_log
     
     def get_events_by_type(self, event_type: str, limit: int = 100) -> List[AuditLog]:
-        """Get audit events by type."""
         return self.session.query(AuditLog).filter(
             AuditLog.event_type == event_type
         ).order_by(desc(AuditLog.timestamp)).limit(limit).all()
@@ -384,7 +339,6 @@ class AuditLogRepository(BaseRepository):
         entity_id: str,
         limit: int = 100
     ) -> List[AuditLog]:
-        """Get audit events for a specific entity."""
         return self.session.query(AuditLog).filter(
             and_(
                 AuditLog.entity_type == entity_type,

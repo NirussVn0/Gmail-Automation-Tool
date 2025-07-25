@@ -1,5 +1,3 @@
-"""API routes for proxy management."""
-
 import math
 from typing import List, Optional
 
@@ -38,22 +36,17 @@ async def list_proxies(
     country: Optional[str] = Query(None, description="Filter by country"),
     proxy_repo: ProxyRepository = Depends(get_proxy_repository),
 ) -> ProxyList:
-    """Get paginated list of proxies."""
     try:
-        # Calculate offset
         offset = (page - 1) * per_page
-        
-        # Get proxies
+
         proxies = proxy_repo.get_all(limit=per_page, offset=offset)
-        
-        # Apply filters
+
         if status:
             proxies = [p for p in proxies if p.status == status]
-        
+
         if country:
             proxies = [p for p in proxies if p.country == country.upper()]
-        
-        # Get total count
+
         total = proxy_repo.count()
         pages = math.ceil(total / per_page)
         
@@ -78,7 +71,6 @@ async def get_proxy(
     proxy_id: int,
     proxy_repo: ProxyRepository = Depends(get_proxy_repository),
 ) -> ProxyResponse:
-    """Get a specific proxy by ID."""
     proxy = proxy_repo.get_by_id(proxy_id)
     if not proxy:
         raise HTTPException(
@@ -96,9 +88,7 @@ async def create_proxy(
     audit_repo: AuditLogRepository = Depends(get_audit_log_repository),
     db: Session = Depends(get_db),
 ) -> ProxyResponse:
-    """Create a new proxy."""
     try:
-        # Create proxy using proxy manager (includes health check)
         proxy = await proxy_manager.add_proxy(
             host=proxy_data.host,
             port=proxy_data.port,
@@ -108,8 +98,7 @@ async def create_proxy(
             max_concurrent_usage=proxy_data.max_concurrent_usage,
             weight=proxy_data.weight
         )
-        
-        # Update additional fields
+
         if proxy_data.country:
             proxy.country = proxy_data.country.upper()
         if proxy_data.region:
@@ -121,7 +110,6 @@ async def create_proxy(
         
         db.commit()
         
-        # Log audit event
         audit_repo.log_event(
             event_type="proxy_creation",
             entity_type="proxy",
@@ -152,9 +140,7 @@ async def delete_proxy(
     audit_repo: AuditLogRepository = Depends(get_audit_log_repository),
     db: Session = Depends(get_db),
 ) -> None:
-    """Delete a proxy."""
     try:
-        # Get proxy for logging
         proxy_repo = ProxyRepository(db)
         proxy = proxy_repo.get_by_id(proxy_id)
         if not proxy:
@@ -162,8 +148,7 @@ async def delete_proxy(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Proxy not found"
             )
-        
-        # Delete proxy using proxy manager
+
         success = await proxy_manager.remove_proxy(proxy_id)
         if not success:
             raise HTTPException(
@@ -171,7 +156,6 @@ async def delete_proxy(
                 detail="Cannot delete proxy - it may be in use"
             )
         
-        # Log audit event
         audit_repo.log_event(
             event_type="proxy_deletion",
             entity_type="proxy",
@@ -200,7 +184,6 @@ async def delete_proxy(
 async def get_proxy_stats(
     proxy_manager: ProxyManager = Depends(get_proxy_manager),
 ) -> ProxyStats:
-    """Get proxy statistics summary."""
     try:
         stats = await proxy_manager.get_proxy_statistics()
         return ProxyStats(**stats)
@@ -219,7 +202,6 @@ async def test_proxy(
     proxy_repo: ProxyRepository = Depends(get_proxy_repository),
     proxy_manager: ProxyManager = Depends(get_proxy_manager),
 ) -> dict:
-    """Test a specific proxy's health."""
     try:
         proxy = proxy_repo.get_by_id(proxy_id)
         if not proxy:
@@ -228,7 +210,6 @@ async def test_proxy(
                 detail="Proxy not found"
             )
         
-        # Perform health check
         is_healthy, response_time, error = await proxy_manager.health_checker.check_proxy_health(proxy)
         
         return {
