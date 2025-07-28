@@ -81,8 +81,8 @@ ServiceController::show_status() {
         
         echo
         echo "URLs:"
-        echo "  Backend API: http://localhost:8000"
-        echo "  Frontend:    http://localhost:3000"
+        echo "  Backend API: http://localhost:8001"
+        echo "  Frontend:    http://localhost:3001"
         echo "  Logs:        $LOG_DIR/"
         echo
 }

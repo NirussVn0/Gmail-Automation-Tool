@@ -221,7 +221,7 @@ class AppConfig(BaseSettings):
         description="API server host"
     )
     port: int = Field(
-        default=8000,
+        default=8001,
         description="API server port"
     )
     

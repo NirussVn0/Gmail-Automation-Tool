@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'gmail-automation-backend',
       script: 'python',
-      args: '-m uvicorn backend.main:app --host 0.0.0.0 --port 8000',
+      args: '-m uvicorn backend.main:app --host 0.0.0.0 --port 8001',
       cwd: '/mnt/b/__CODEBASE__/tool_email_proxy',
       instances: 1,
       exec_mode: 'fork',
@@ -46,15 +46,15 @@ module.exports = {
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
-        PORT: '3000',
-        NEXT_PUBLIC_API_URL: 'http://localhost:8000',
-        NEXT_PUBLIC_WS_URL: 'ws://localhost:8000'
+        PORT: '3001',
+        NEXT_PUBLIC_API_URL: 'http://localhost:8001',
+        NEXT_PUBLIC_WS_URL: 'ws://localhost:8001'
       },
       env_development: {
         NODE_ENV: 'development',
-        PORT: '3000',
-        NEXT_PUBLIC_API_URL: 'http://localhost:8000',
-        NEXT_PUBLIC_WS_URL: 'ws://localhost:8000'
+        PORT: '3001',
+        NEXT_PUBLIC_API_URL: 'http://localhost:8001',
+        NEXT_PUBLIC_WS_URL: 'ws://localhost:8001'
       },
       error_file: './logs/frontend-error.log',
       out_file: './logs/frontend-out.log',

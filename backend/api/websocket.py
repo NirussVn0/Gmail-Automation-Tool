@@ -198,4 +198,5 @@ async def periodic_stats_broadcast():
         except Exception as e:
             logger.error(f"Error in periodic stats broadcast: {e}")
 
-asyncio.create_task(periodic_stats_broadcast())
+# Task will be created when the app starts
+# asyncio.create_task(periodic_stats_broadcast())
